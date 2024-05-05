@@ -1,5 +1,5 @@
 use std::fmt::{Display, Formatter};
-use super::bcd::encode;
+use super::bcd::*;
 #[derive(Debug)]
 pub struct Integer {
     size: usize,
@@ -24,34 +24,35 @@ impl Integer {
         }
         self.bytes[offset] = insert_byte;
     }
-    pub fn write_all(&mut self, insert_byte: u8) {
+    pub fn initalize(&mut self, insert_byte: u8) {
         for i in 0..self.size {
             self.bytes[i] = insert_byte;
         }
     }
-    pub fn show_as_bits(&self) -> String {
+    pub fn assign(&mut self, s :&str) {
+        let tem =  revcon(s, self.size);
+        self.bytes = tem;
+    }
+    pub fn bit(&self) -> String {
         let mut ss = String::new();
         for i in self.bytes.iter() {
             ss.push_str(&*format!("{:08b} ", i));
         }
-        ss.pop(); // remove bottom of space
+        ss.pop(); // remove space of the end
         ss
     }
     pub fn add(&mut self, other: &Integer) {
         if other.size > self.size {
-            panic!("Incompatible size: {} {} \n Please Consider swap the operation.", self.size, other.size);
+            panic!("Incompatible size: {} < {} \n Please consider swap the operation.", self.size, other.size);
         }
         let mut carry = false;
         for (count, i) in other.bytes.iter().enumerate().rev() {
             if carry {
                 self.bytes[count] += 1;
-                carry = false;
             }
-            let b2: u16 = (self.bytes[count] as u16) + (*i as u16);
-            self.bytes[count] += *i;
-            if b2 > 255 {
-                carry = true;
-            }
+            let b2 = self.bytes[count].overflowing_add(*i);
+            self.bytes[count] = b2.0;
+            carry = b2.1;
         }
     }
     pub fn hex(&self) -> String {
@@ -59,26 +60,12 @@ impl Integer {
         for i in self.bytes.iter() {
             vass.push_str(&*format!("0x{:02x} ", i));
         }
+        vass.pop(); // remove space of the end
         vass
-    }
-}
-fn u8_to_str(v: u8) -> &'static str {
-    match v {
-        1 => "1",
-        2 => "2",
-        3 => "3",
-        4 => "4",
-        5 => "5",
-        6 => "6",
-        7 => "7",
-        8 => "8",
-        9 => "9",
-        0 => "0",
-        _ => "?"
     }
 }
 impl Display for Integer {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", &*encode(&self.bytes.to_vec()))
+        write!(f, "{}", &*conv(&self.bytes.to_vec()))
     }
 }
