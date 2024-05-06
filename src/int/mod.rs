@@ -1,6 +1,6 @@
 pub mod natural;
 mod bcd;
-mod impls;
+pub mod impls;
 
 #[derive(Debug)]
 pub struct Integer {

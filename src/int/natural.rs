@@ -11,8 +11,7 @@ impl MUint for Integer {
 
     # Examples
     ```
-    # use crate::numtools::int::natural::MUint;
-    # use crate::numtools::int::Integer;
+    # use crate::numtools::int::*;
     let mut i = Integer::new(256);
     ```
      */
@@ -40,8 +39,7 @@ impl MUint for Integer {
 
     # Examples
     ```
-    # use crate::numtools::int::Integer;
-    # use crate::numtools::int::natural::MUint;
+    # use crate::numtools::int::*;
     # fn test() {
     let mut i = Integer::new(1234);
 
@@ -61,9 +59,8 @@ impl MUint for Integer {
 
     # Examples
     ```
-    # use crate::numtools::int::natural::MUint;
-    # use crate::numtools::int::Integer;
-    let mut i = MUint::new(256);
+    # use crate::numtools::int::*;
+    let mut i = Integer::new(256);
     ```
     */
     fn write_at(&mut self, offset: usize, insert_byte: u8) {
@@ -78,9 +75,8 @@ impl MUint for Integer {
 
     # Examples
     ```
-    # use crate::numtools::int::natural::MUint;
-    # use crate::numtools::int::Integer;
-      let mut i = MUint::new(256);
+    # use crate::numtools::int::*;
+      let mut i = Integer::new(256);
     ```
      */
     fn initialize(&mut self, insert_byte: u8) {
@@ -100,9 +96,8 @@ impl MUint for Integer {
     Assign Integer value from string
     # Examples
     ```
-    # use crate::numtools::int::natural::MUint;
-    # use crate::numtools::int::Integer;
-    let mut i = MUint::new(13);
+    # use crate::numtools::int::*;
+    let mut i = Integer::new(13);
     i.assign("1234567891");
     ```
     */
@@ -115,10 +110,9 @@ impl MUint for Integer {
 
     # Examples
     ```
-    # use crate::numtools::int::natural::MUint;
-    # use crate::numtools::int::Integer;
+    # use crate::numtools::int::*;
     # fn test() {
-    let mut i = MUint::new(2);
+    let mut i = Integer::new(2);
 
     assert_eq!(&*i.bits(), "00000000 00000000");
     # }
@@ -138,10 +132,9 @@ impl MUint for Integer {
 
      # Examples
      ```
-    # use crate::numtools::int::natural::MUint;
-    # use crate::numtools::int::Integer;
+    # use crate::numtools::int::*;
     # fn test() {
-    let mut i = MUint::new(2);
+    let mut i = Integer::new(2);
     assert_eq!(i.hex(), "0x00 0x00");
     # }
      ```
@@ -164,11 +157,10 @@ impl MUint for Integer {
 
     # Examples
     ```
-    # use crate::numtools::int::natural::MUint;
-    # use crate::numtools::int::Integer;
+    # use crate::numtools::int::*;
     # fn test() {
-    let mut int1 = MUint::new(128);
-    let mut int2 =  MUint::new(64);
+    let mut int1 = Integer::new(128);
+    let mut int2 =  Integer::new(64);
     int1.assign("1234");
     int2.assign("12345678909876543210");
     int1.add(&int2);
@@ -205,10 +197,10 @@ impl MUint for Integer {
 
     # Examples
     ```
-    # use crate::numtools::int::natural::MUint;
+    # use crate::numtools::int::*;
     # fn test() {
-    let mut int1 = MUint::new(3);
-    let mut int2 = MUint::new(1);
+    let mut int1 = Integer::new(3);
+    let mut int2 = Integer::new(1);
     int1.assign("8080");
     int2.assign("127");
     int1.subtract(&int2);
