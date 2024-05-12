@@ -1,38 +1,9 @@
-use std::fmt::{Display, Formatter};
-use super::bcd::*;
+use super::util::bcd::*;
 use super::Integer;
 use super::MUint;
 
 // Use Big Endian, Only Unsigned for now, and allows overflow
 impl MUint for Integer {
-
-    /**
-    Create new object that has N bytes, N is the first parameter.
-
-    # Examples
-    ```
-    # use crate::numtools::int::*;
-    let mut i = Integer::new(256);
-    ```
-     */
-    fn new(size: usize) -> Integer {
-        if size == 0 { panic!("Not zero"); }
-        let mut dat: Vec<u8> = Vec::new();
-        dat.resize(size, 0);
-        let dat = dat.into_boxed_slice();
-
-        Integer {
-            size,
-            bytes: dat,
-        }
-    }
-
-    fn from(t: &[u8]) -> Integer {
-        Integer {
-            size: t.len(),
-            bytes: Box::from(t),
-        }
-    }
 
     /**
     Return this size
@@ -49,6 +20,23 @@ impl MUint for Integer {
      */
     fn size(&self) -> usize {
         self.size
+    }
+
+    /**
+    Check whether `Rhs` is equal to `Lhs`, whatever each size is different. <br>
+    If so, return true, else false.
+     */
+    fn equal(&self, rhs: &Integer) -> bool {
+        let less = match self.size - rhs.size {
+            0 => { rhs.size },
+            _ => { self.size }
+        };
+        for i in 0..less {
+            if self.bytes[self.size - i - 1] != rhs.bytes[rhs.size - i - 1] {
+                return false;
+            }
+        }
+        true
     }
 
     /**
@@ -85,13 +73,6 @@ impl MUint for Integer {
         }
     }
 
-    fn clone(&self) -> Integer {
-        Integer {
-            size: self.size(),
-            bytes: self.bytes.clone(),
-        }
-    }
-
     /**
     Assign Integer value from string
     # Examples
@@ -102,7 +83,8 @@ impl MUint for Integer {
     ```
     */
     fn assign(&mut self, s :&str) {
-        self.bytes =  revcon(s, self.size);
+        let s = s.trim_start_matches("0");
+        revcon(s, &mut self.bytes);
     }
 
     /**
@@ -128,7 +110,7 @@ impl MUint for Integer {
     }
 
     /**
-     Return string hexadecimal
+     Return hexadecimal string
 
      # Examples
      ```
@@ -149,11 +131,11 @@ impl MUint for Integer {
     }
 
     /**
-    Perform Rhs += Lhs
+    Perform Rhs += Lhs <br>
     Return true if it was overflow, else false
 
     # Panic
-     It panics when Rhs\.size < Lhs\.size
+     It panics when Rhs\.size > Lhs\.size
 
     # Examples
     ```
@@ -163,25 +145,27 @@ impl MUint for Integer {
     let mut int2 =  Integer::new(64);
     int1.assign("1234");
     int2.assign("12345678909876543210");
-    int1.add(&int2);
+    int1.muint_add(&int2);
 
     assert_eq!("12345678909876544444", int1);
     # }
     ```
      */
-    fn add(&mut self, other: &Integer) -> bool {
+    fn muint_add(&mut self, other: &Integer) -> bool {
         if other.size > self.size {
             panic!("Incompatible size: {} < {} \n Please consider swap the operation.", self.size, other.size);
         }
 
         let mut carry = false;
-        for (count, i) in other.bytes.iter().enumerate().rev() {
-            let index = self.size - other.size + count;
+        for index in (0..self.size).rev() {
             if carry {
                 (self.bytes[index], carry) = self.bytes[index].overflowing_add(1);
             }
-
-            let b2 = self.bytes[index].overflowing_add(*i);
+            let val = match other.size as i128 - (self.size - index) as i128 {
+                i@ 0.. => other.bytes[i as usize],
+                _ => 0,
+            };
+            let b2 = self.bytes[index].overflowing_add(val);
             self.bytes[index] = b2.0;
             if !carry { carry = b2.1; }
         }
@@ -193,7 +177,7 @@ impl MUint for Integer {
     Return true if it was overflow, else false
 
     # Panic
-    It panics when Rhs\.size < Lhs\.size
+    It panics when Rhs\.size > Lhs\.size
 
     # Examples
     ```
@@ -211,17 +195,20 @@ impl MUint for Integer {
      */
     fn subtract(&mut self, other: &Integer) -> bool {
         if other.size > self.size {
-            panic!("Incompatible size: {} < {} \n Please consider swap the operation.", self.size, other.size);
+            panic!("Incompatible size: {} < {} \n Please consider swap the operation.",
+                   self.size, other.size);
         }
 
         let mut carry = false;
-        for (count, i) in other.bytes.iter().enumerate().rev() {
-            let index = self.size - other.size + count;
+        for index in (0..self.size).rev() {
             if carry {
                 (self.bytes[index], carry) = self.bytes[index].overflowing_sub(1);
             }
-
-            let b2 = self.bytes[index].overflowing_sub(*i);
+            let val = match other.size as i128 - (self.size - index) as i128 {
+                 i@ 0.. => other.bytes[i as usize],
+                _ => 0,
+            };
+            let b2 = self.bytes[index].overflowing_sub(val);
             self.bytes[index] = b2.0;
             if !carry { carry = b2.1; }
         }
@@ -232,15 +219,46 @@ impl MUint for Integer {
         todo!()
     }
 
-    fn divide(&mut self, other: Integer) -> (Integer, bool) {
+    fn divide(&mut self, other: &Integer) -> (Integer, bool) {
         todo!()
     }
 
-    fn shr(&mut self, other: Integer) -> bool {
-        todo!()
+    /**
+    Left shift `count` times. <br>
+    It returns true if overflow, else false.
+     */
+    fn shr(&mut self, count: u64) -> bool {
+        if count >= (8 * self.size) as u64 {
+            self.bytes = Vec::with_capacity(self.size).into_boxed_slice();
+            return true;
+        }
+
+        let mut i = 0;
+        for &k in self.bytes.iter() {
+            if k != 0 { break; }
+            i += 1;
+        }
+
+        for _ in 0..count {
+            let mut carry = false;
+
+            // Check the following loop is run
+            let mut chk = true;
+            for idx in (i..self.size).rev() {
+                chk = false;
+                let ii = self.bytes[idx] % 2;
+                self.bytes[idx] >>= 1;
+
+                if carry { self.bytes[idx] |= 128; }
+                carry = ii == 1;
+            }
+            if chk { return chk; }
+            if self.bytes[i] == 0 { i += 1; }
+        }
+        false
     }
 
-    fn shl(&mut self, other: Integer) -> bool {
+    fn shl(&mut self, count: u64) -> bool {
         todo!()
     }
 
@@ -260,13 +278,11 @@ impl MUint for Integer {
         todo!()
     }
 
-    fn shr_test(&mut self, other: Integer) -> (Integer, bool) {
+    fn shr_test(&self, count: u64) -> (Integer, bool) {
         todo!()
     }
 
-    fn shl_test(&mut self, other: Integer) -> (Integer, bool) {
+    fn shl_test(&self, count: u64) -> (Integer, bool) {
         todo!()
     }
 }
-
-
