@@ -29,4 +29,10 @@ pub mod misc {
         assert_eq!(true, j.subtract(&Integer::from(1u16)));
         assert_eq!("16777215", j.to_string());
     }
+    #[test]
+    fn test_3() {
+        let mut k = Integer::new(8000);
+        k.initialize(0xff);
+        println!("{}", k);
+    }
 }

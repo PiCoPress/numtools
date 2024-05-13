@@ -1,7 +1,5 @@
-# NEXT TODO  
-1. Create array shifting calculation to reduce code complexity.
-2. Implements standard traits for convenience.
-3. Improve super slow performance.
-4. Bug fix if exists.
+# Synopsis
+1. Hybrid assignment of u8 array for BigInteger. For example, if an array that size is 5, it could be `u32` + `u8` (4 + 1 = 5). The similar library `num-bigint` works with `Vec<u32>`, but `numtools` is `Box<[u8]>`. Let's see a video.  
 
-파이썬에선 2000바이트짜리 정수를 계산하는 데 1초도 안걸리지만 이건 10초가 넘게 걸린다. 하 인생....
+![benchmark](./resources/benchmark.gif)
+![asdf/src/main.rs](./resources/num-bigint_sample.png)
